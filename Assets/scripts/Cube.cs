@@ -5,23 +5,45 @@ using UnityEngine.Pool;
 
 public class Cube : MonoBehaviour
 {
-    private ObjectPool<GameObject> _pool;
+    const float Mass = 100;
+
     private Spawner _spawner;
     private bool _hasCollised = false;
 
+    private Collider _collider;
+    private Rigidbody _rigidbody;
+    private Renderer _color;
+
     public bool HasCollised => _hasCollised;
+
+    private void Awake()
+    {
+        _collider = GetComponent<Collider>();
+        _rigidbody = GetComponent<Rigidbody>();
+        _color = GetComponent<Renderer>();
+    }
 
     private void OnCollisionEnter(Collision collision)
     {
-        _spawner.DestroyCube(this, collision);
+        if (!HasCollised && collision.gameObject.TryGetComponent<Platform>(out Platform platform))
+        {
+            ChangeStatus();
+            _spawner.DestroyCube(this);
+        }
     }
 
-    private void ResetState()
+    private void OnDisable()
     {
-        GetComponent<Collider>().enabled = true;
-        GetComponent<Rigidbody>().velocity = Vector3.zero;
-        GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-        GetComponent<Renderer>().material.color = Color.white;
+        _spawner.ReturnObjectToPool(gameObject);
+    }
+
+    public void ResetState()
+    {
+        _collider.enabled = true;
+        _rigidbody.velocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
+        _rigidbody.mass = Mass;
+        _color.material.color = Color.white;
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
 
@@ -33,19 +55,11 @@ public class Cube : MonoBehaviour
         _hasCollised = true;
     }
 
-    public void ReturnToPool()
-    {
-        ResetState();
-
-        _pool.Release(gameObject);
-    }
-
-    public void Initialize(Spawner spawner, ObjectPool<GameObject> pool)
+    public void Initialize(Spawner spawner)
     {
         if (_spawner != null) 
             return;
 
-        _pool = pool;
         _spawner = spawner;
     }
 }

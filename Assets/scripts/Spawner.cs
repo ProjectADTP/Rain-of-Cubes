@@ -16,7 +16,7 @@ public class Spawner : MonoBehaviour
     {
         _cubePool = new ObjectPool<GameObject>(
             createFunc: () => Instantiate(_cubePrefab, this.transform),
-            actionOnGet: cube =>cube.SetActive(true),
+            actionOnGet: cube => cube.SetActive(true),
             actionOnRelease: cube => cube.SetActive(false),
             actionOnDestroy: cube => Destroy(cube),
             collectionCheck: false,
@@ -24,7 +24,7 @@ public class Spawner : MonoBehaviour
             maxSize: _poolMaxSize
         );
 
-        InvokeRepeating(nameof(SpawnCube), 0f, 1f);
+        InvokeRepeating(nameof(SpawnCube), 0f, 1.5f);
     }
 
     private void SpawnCube()
@@ -36,7 +36,7 @@ public class Spawner : MonoBehaviour
             cube.transform.position = new Vector2(Random.Range(transform.position.x - 10,
                 transform.position.x + 10), transform.position.y);
 
-            cube.Initialize(this,_cubePool);
+            cube.Initialize(this);
         }
     }
 
@@ -51,19 +51,21 @@ public class Spawner : MonoBehaviour
             yield return null; 
         }
 
-        cube.ReturnToPool();
+        cube.ResetState();
+        cube.gameObject.SetActive(false);
     }
 
-    public void DestroyCube(Cube cube, Collision collision)
+    public void DestroyCube(Cube cube)
     {
-        if (!cube.HasCollised && collision.gameObject.CompareTag("Platform"))
-        {
-            float lifeTime = Random.Range(2f, 5f);
+        float lifeTime = Random.Range(2f, 5f);
 
-            cube.ChangeStatus();
-            _colorChanger.ChangeColor(cube);
+        _colorChanger.ChangeColor(cube);
 
-            StartCoroutine(ReturnToPoolAfterDelay(lifeTime, cube));
-        }
+        StartCoroutine(ReturnToPoolAfterDelay(lifeTime, cube));
+    }
+
+    public void ReturnObjectToPool(GameObject gameObject)
+    {
+        _cubePool.Release(gameObject);
     }
 }
