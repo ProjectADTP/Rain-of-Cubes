@@ -1,30 +1,40 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _cubePrefab;
+    [SerializeField] private Cube _cubePrefab;
     [SerializeField] private int _poolSize;
     [SerializeField] private int _poolMaxSize;
     [SerializeField] private ColorChanger _colorChanger;
+    [SerializeField] private float _minCubeLiveTime;
+    [SerializeField] private float _maxCubeLiveTime;
+    [SerializeField] private float _spawnTime;
 
-    private ObjectPool<GameObject> _cubePool;
+    private ObjectPool<Cube> _cubePool;
+    private float _rangeSpawn;
 
     private void Start()
     {
-        _cubePool = new ObjectPool<GameObject>(
+        _cubePool = new ObjectPool<Cube>(
             createFunc: () => Instantiate(_cubePrefab, this.transform),
-            actionOnGet: cube => cube.SetActive(true),
-            actionOnRelease: cube => cube.SetActive(false),
+            actionOnGet: cube => cube.gameObject.SetActive(true),
+            actionOnRelease: cube =>
+            {
+                cube.ResetState();
+                cube.OnCollisionWithObstacle -= DestroyCube;
+                cube.gameObject.SetActive(false);
+            },
             actionOnDestroy: cube => Destroy(cube),
             collectionCheck: false,
             defaultCapacity: _poolSize,
             maxSize: _poolMaxSize
         );
 
-        InvokeRepeating(nameof(SpawnCube), 0f, 1.5f);
+        _rangeSpawn = 10;
+
+        InvokeRepeating(nameof(SpawnCube), 0f, _spawnTime);
     }
 
     private void SpawnCube()
@@ -33,39 +43,26 @@ public class Spawner : MonoBehaviour
 
         if (cube != null) 
         {
-            cube.transform.position = new Vector2(Random.Range(transform.position.x - 10,
-                transform.position.x + 10), transform.position.y);
+            cube.transform.position = new Vector2(Random.Range(transform.position.x - _rangeSpawn,
+                transform.position.x + _rangeSpawn), transform.position.y);
 
-            cube.Initialize(this);
+            cube.OnCollisionWithObstacle += DestroyCube;
         }
     }
 
     private IEnumerator ReturnToPoolAfterDelay(float delay, Cube cube)
     {
-        float elapsedTime = 0f;
+        yield return new WaitForSeconds(delay);
 
-        while (elapsedTime < delay)
-        {
-            elapsedTime += Time.deltaTime;
-
-            yield return null; 
-        }
-
-        cube.ResetState();
-        cube.gameObject.SetActive(false);
+        _cubePool.Release(cube);
     }
 
     public void DestroyCube(Cube cube)
     {
-        float lifeTime = Random.Range(2f, 5f);
+        float lifeTime = Random.Range(_minCubeLiveTime, _maxCubeLiveTime);
 
         _colorChanger.ChangeColor(cube);
 
         StartCoroutine(ReturnToPoolAfterDelay(lifeTime, cube));
-    }
-
-    public void ReturnObjectToPool(GameObject gameObject)
-    {
-        _cubePool.Release(gameObject);
     }
 }

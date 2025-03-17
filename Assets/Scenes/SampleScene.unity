@@ -240,11 +240,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8a3ce8ddfaf410438ecd5c5b83deeed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _cubePrefab: {fileID: 1913672310013333438, guid: cf8bf13decb478d4f8198f008d4ac7d6,
+  _cubePrefab: {fileID: 6689806639805069727, guid: cf8bf13decb478d4f8198f008d4ac7d6,
     type: 3}
   _poolSize: 5
   _poolMaxSize: 7
   _colorChanger: {fileID: 1498394882}
+  _minCubeLiveTime: 2
+  _maxCubeLiveTime: 5
+  _spawnTime: 1.5
 --- !u!4 &631154714 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1477981334569879960, guid: ce01711945c5f7a4495d8115f9d8ab4c,
