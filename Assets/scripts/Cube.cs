@@ -1,18 +1,23 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 
 public class Cube : MonoBehaviour
 {
+    [SerializeField] private float _minCubeLiveTime;
+    [SerializeField] private float _maxCubeLiveTime;
+
+    private ColorChanger _colorChanger;
     private Rigidbody _rigidbody;
     private Renderer _color;
-
-    public event Action<Cube> OnCollisionWithObstacle;
-
     private bool _hasCollised = false;
+    
+    public event Action<Cube> Collided;
 
     private void Awake()
     {
+        _colorChanger = new ColorChanger();
         _rigidbody = GetComponent<Rigidbody>();
         _color = GetComponent<Renderer>();
     }
@@ -21,10 +26,21 @@ public class Cube : MonoBehaviour
     {
         if (_hasCollised == false && collision.gameObject.TryGetComponent<Platform>(out Platform platform))
         {
+            float lifeTime = UnityEngine.Random.Range(_minCubeLiveTime, _maxCubeLiveTime);
+
             ChangeStatus();
 
-            OnCollisionWithObstacle?.Invoke(this);
+            StartCoroutine(ReturnToPool(lifeTime));
         }
+    }
+
+    private IEnumerator ReturnToPool(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        ResetState();
+
+        Collided?.Invoke(this);
     }
 
     public void ResetState()
@@ -40,6 +56,7 @@ public class Cube : MonoBehaviour
 
     public void ChangeStatus()
     {
+        _color.material.color = _colorChanger.ChangeColor();
         _hasCollised = true;
     }
 }

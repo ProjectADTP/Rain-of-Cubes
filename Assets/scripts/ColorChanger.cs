@@ -1,9 +1,9 @@
 using UnityEngine;
 
-public class ColorChanger : MonoBehaviour
+public class ColorChanger
 {
-    public void ChangeColor(Cube cube)
+    public Color ChangeColor()
     {
-        cube.GetComponent<Renderer>().material.color = new Color(Random.value, Random.value, Random.value);
+        return new Color(Random.value, Random.value, Random.value);
     }
 }
